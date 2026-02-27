@@ -5,7 +5,7 @@ import logging
 import threading
 
 from odoo import api, fields, models
-from odoo.osv import expression
+from odoo.fields import Domain
 from odoo.tools import html2plaintext
 
 from ..services.weaviate_service import WeaviateService
@@ -169,20 +169,24 @@ class ProductTemplate(models.Model):
     # Backend search override
     # ------------------------------------------------------------------
 
-    @api.model
-    def search(self, domain, offset=0, limit=None, order=None, **kwargs):
+    def search_fetch(self, domain, field_names=None, offset=0, limit=None, order=None):
         """
         Post-sort results by Weaviate score when a Weaviate search was performed.
 
-        ``_search`` populates ``_weaviate_scores.scores`` (thread-local) for the
-        current request.  Here we sort the final recordset by that score so the
-        list view renders results highest-score-first.  When no Weaviate search
-        was done (scores dict is empty) the order is unchanged.
+        In Odoo 19, ``search_read()`` calls ``search_fetch()`` directly,
+        bypassing ``search()``.  This is therefore the correct interception
+        point for score-based result ordering.
+
+        Scores are reset here — before ``super().search_fetch()`` is called —
+        so that stale scores from a previous Weaviate search never bleed into
+        a subsequent standard ORM search, while still being readable after
+        ``_search`` sets them (``_fetch_query`` does not call ``_search``).
         """
-        result = super().search(domain, offset=offset, limit=limit, order=order, **kwargs)
-        # An int result means count=True was forwarded — don't try to sort it.
-        if isinstance(result, int):
-            return result
+        _weaviate_scores.scores = {}
+
+        result = super().search_fetch(
+            domain, field_names, offset=offset, limit=limit, order=order
+        )
         scores = getattr(_weaviate_scores, "scores", {})
         if scores:
             result = result.sorted(key=lambda r: scores.get(r.id, 0.0), reverse=True)
@@ -206,10 +210,16 @@ class ProductTemplate(models.Model):
 
         ``**kwargs`` forwards any extra ORM keyword arguments introduced in
         future Odoo versions (e.g. ``active_test``) to ``super()``.
+
+        Note: scores are reset in ``search()``, not here, to avoid internal
+        Odoo ``_search`` calls (field fetching, ACL checks) clobbering scores
+        that were just set by the Weaviate search path.
         """
-        # Always reset scores at the start of each search so that a previous
-        # Weaviate search result cannot bleed into a subsequent non-Weaviate search.
-        _weaviate_scores.scores = {}
+        # weaviate_search_score is non-stored — strip it from the SQL ORDER BY
+        # to avoid a "column does not exist" error.  The search() override
+        # re-sorts the recordset by score after the SQL query returns.
+        if order and "weaviate_search_score" in order:
+            order = None
 
         if not _is_backend_search_enabled(self.env):
             return super()._search(domain, offset=offset, limit=limit, order=order, **kwargs)
@@ -234,16 +244,13 @@ class ProductTemplate(models.Model):
             if not score_map:
                 # No Weaviate results → fall through so the UI shows
                 # "no records" via the normal ORM path.
-                _weaviate_scores.scores = {}
                 return super()._search(domain, offset=offset, limit=limit, order=order, **kwargs)
 
             # Store scores so weaviate_search_score can read them this request.
             _weaviate_scores.scores = score_map
             weaviate_ids = list(score_map.keys())
 
-            final_domain = expression.AND(
-                [[("id", "in", weaviate_ids)], clean_domain or []]
-            )
+            final_domain = list(Domain([("id", "in", weaviate_ids)]) & Domain(clean_domain))
             _logger.info(
                 "WeaviateSearch: final_domain=%s", final_domain
             )
@@ -297,7 +304,9 @@ class ProductTemplate(models.Model):
 
         # Normalise to explicit prefix notation so every binary operator has
         # exactly two operands and we never encounter implicit top-level ANDs.
-        tokens = list(expression.normalize_domain(domain))
+        # Uses odoo.fields.Domain (Odoo 19+) instead of the deprecated
+        # expression.normalize_domain from odoo.osv.
+        tokens = list(Domain(domain))
         query_text = None
 
         def is_text_leaf(tok):
@@ -352,4 +361,3 @@ class ProductTemplate(models.Model):
 
         clean_tokens, _ = parse(0)
         return query_text, clean_tokens
-

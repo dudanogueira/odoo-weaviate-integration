@@ -1,2 +1,5 @@
 # Never commit the real .env file — it contains API keys.
 .env
+.pyc
+__pycache__/
+.DS_Store
