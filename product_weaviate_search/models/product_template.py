@@ -34,6 +34,15 @@ _WATCHED_FIELDS = frozenset(
 )
 
 
+def _is_live_sync_enabled(env):
+    return (
+        env["ir.config_parameter"]
+        .sudo()
+        .get_param("product_weaviate_search.live_sync_enabled", "True")
+        == "True"
+    )
+
+
 def _is_backend_search_enabled(env):
     # Context key takes priority — set by the search panel filters in the list view.
     ctx_override = env.context.get("weaviate_search")
@@ -109,12 +118,13 @@ class ProductTemplate(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        records._weaviate_sync_after_write()
+        if _is_live_sync_enabled(self.env):
+            records._weaviate_sync_after_write()
         return records
 
     def write(self, vals):
         result = super().write(vals)
-        if _WATCHED_FIELDS.intersection(vals.keys()):
+        if _is_live_sync_enabled(self.env) and _WATCHED_FIELDS.intersection(vals.keys()):
             self._weaviate_sync_after_write()
         return result
 
@@ -122,7 +132,7 @@ class ProductTemplate(models.Model):
         # Capture UUIDs before the records are deleted.
         uuid_map = {r.id: r.weaviate_uuid for r in self if r.weaviate_uuid}
         result = super().unlink()
-        if uuid_map:
+        if uuid_map and _is_live_sync_enabled(self.env):
             svc = WeaviateService.from_config(self.env)
             if svc:
                 for odoo_id, weaviate_uuid in uuid_map.items():

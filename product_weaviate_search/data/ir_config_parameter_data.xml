@@ -68,6 +68,11 @@
     </record>
 
     <!-- Feature toggles -->
+    <record id="param_live_sync_enabled" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.live_sync_enabled</field>
+        <field name="value">True</field>
+    </record>
+
     <record id="param_backend_search_enabled" model="ir.config_parameter">
         <field name="key">product_weaviate_search.backend_search_enabled</field>
         <field name="value">False</field>

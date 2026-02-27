@@ -9,6 +9,7 @@ from odoo import api, fields, models
 _BOOL_PARAMS = [
     "weaviate_http_secure",
     "weaviate_grpc_secure",
+    "weaviate_live_sync_enabled",
     "weaviate_backend_search_enabled",
     "weaviate_shop_search_enabled",
 ]
@@ -85,7 +86,11 @@ class ResConfigSettings(models.TransientModel):
         config_parameter="product_weaviate_search.openai_api_key",
         help=(
             "Used for the text2vec-openai vectorizer. "
-            "Sent to Weaviate as the X-OpenAI-Api-Key header on every request."
+            "When set, sent to Weaviate as the X-OpenAI-Api-Key header on every request. "
+            "Optional when Weaviate is already configured with the key via its own "
+            "OPENAI_APIKEY environment variable (e.g. the included Docker Compose stack). "
+            "Required for Weaviate Cloud or custom deployments that do not have the key "
+            "in their environment."
         ),
     )
 
@@ -104,6 +109,15 @@ class ResConfigSettings(models.TransientModel):
     # Feature Toggles (also Boolean — manual get/set)
     # ------------------------------------------------------------------
 
+    weaviate_live_sync_enabled = fields.Boolean(
+        string="Enable Live Sync",
+        default=True,
+        help=(
+            "When enabled, products are automatically pushed to Weaviate on "
+            "create, update, or delete. Disable to control sync manually via "
+            "the bulk sync wizard (useful during data migrations or imports)."
+        ),
+    )
     weaviate_backend_search_enabled = fields.Boolean(
         string="Enable Weaviate Backend Search",
         default=False,
@@ -162,3 +176,11 @@ class ResConfigSettings(models.TransientModel):
         for fname in _BOOL_PARAMS:
             key = f"product_weaviate_search.{fname.removeprefix('weaviate_')}"
             set_param(key, str(self[fname]))
+
+    # ------------------------------------------------------------------
+    # Actions
+    # ------------------------------------------------------------------
+
+    def action_open_weaviate_sync_wizard(self):
+        """Open the Weaviate product sync wizard directly from Settings."""
+        return self.env["product.weaviate.sync.wizard"].action_open_wizard()

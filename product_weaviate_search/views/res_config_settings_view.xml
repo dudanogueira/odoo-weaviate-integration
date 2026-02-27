@@ -76,7 +76,7 @@
                     <!-- Always visible -->
                     <setting
                         string="OpenAI API Key"
-                        help="Used for text2vec-openai vectorization. Sent as X-OpenAI-Api-Key header."
+                        help="Used for text2vec-openai vectorization. Sent as X-OpenAI-Api-Key header. Optional when Weaviate already has the key via its OPENAI_APIKEY environment variable (Docker Compose stack). Required for Weaviate Cloud or custom deployments without the env var."
                     >
                         <field name="weaviate_openai_api_key" password="True"/>
                     </setting>
@@ -89,6 +89,16 @@
                 </block>
 
                 <block title="Search Features">
+                    <setting
+                        string="Live Sync"
+                        help="Automatically push products to Weaviate on create, update, or delete."
+                    >
+                        <field name="weaviate_live_sync_enabled"/>
+                        <div class="text-muted">
+                            Disable during bulk imports or data migrations and
+                            use the sync wizard afterwards.
+                        </div>
+                    </setting>
                     <setting
                         string="Backend Product Search"
                         help="Replace the product list view search bar with Weaviate hybrid search."
@@ -121,6 +131,26 @@
                         help="0.0 = pure BM25 keyword search, 1.0 = pure vector search, 0.5 = balanced."
                     >
                         <field name="weaviate_search_alpha"/>
+                    </setting>
+                </block>
+
+                <block title="Product Sync">
+                    <setting
+                        string="Sync Products"
+                        help="Push products to the Weaviate collection. Run after initial setup or after bulk changes."
+                    >
+                        <button
+                            name="action_open_weaviate_sync_wizard"
+                            string="Open Sync Wizard"
+                            type="object"
+                            class="btn-secondary"
+                        />
+                        <div class="text-muted">
+                            Choose to sync all products, only unsynced ones, or
+                            reset the collection and re-index from scratch.
+                            You can also sync selected products directly from
+                            the product list view via <strong>Action → Sync with Weaviate</strong>.
+                        </div>
                     </setting>
                 </block>
 

@@ -32,4 +32,9 @@
         "views/product_template_views.xml",
         "wizard/product_weaviate_sync_wizard_view.xml",
     ],
+    "demo": [
+        # Pre-fills http_host / grpc_host with "weaviate" for the Docker
+        # Compose dev stack.  Load via Settings → (debug mode) → Load Demo Data.
+        "demo/ir_config_parameter_demo.xml",
+    ],
 }
