@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2025 Odoo Community Association (OCA) -->
+<!-- License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<!--
+    Seed default ir.config_parameter values so the settings form renders
+    correctly on first install (empty strings / defaults).
+    These are overwritten the moment the user saves the settings form.
+-->
+<odoo noupdate="1">
+
+    <record id="param_deployment_type" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.deployment_type</field>
+        <field name="value">custom</field>
+    </record>
+
+    <!-- Cloud connection -->
+    <record id="param_url" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.url</field>
+        <field name="value"></field>
+    </record>
+
+    <!-- Shared API keys -->
+    <record id="param_api_key" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.api_key</field>
+        <field name="value"></field>
+    </record>
+
+    <record id="param_openai_api_key" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.openai_api_key</field>
+        <field name="value"></field>
+    </record>
+
+    <!-- Custom connection (connect_to_custom) -->
+    <record id="param_http_host" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.http_host</field>
+        <field name="value"></field>
+    </record>
+
+    <record id="param_http_port" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.http_port</field>
+        <field name="value">8080</field>
+    </record>
+
+    <record id="param_http_secure" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.http_secure</field>
+        <field name="value">False</field>
+    </record>
+
+    <record id="param_grpc_host" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.grpc_host</field>
+        <field name="value"></field>
+    </record>
+
+    <record id="param_grpc_port" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.grpc_port</field>
+        <field name="value">50051</field>
+    </record>
+
+    <record id="param_grpc_secure" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.grpc_secure</field>
+        <field name="value">False</field>
+    </record>
+
+    <!-- Collection -->
+    <record id="param_collection_name" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.collection_name</field>
+        <field name="value">OdooProduct</field>
+    </record>
+
+    <!-- Feature toggles -->
+    <record id="param_backend_search_enabled" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.backend_search_enabled</field>
+        <field name="value">False</field>
+    </record>
+
+    <record id="param_shop_search_enabled" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.shop_search_enabled</field>
+        <field name="value">False</field>
+    </record>
+
+    <!-- Search tuning -->
+    <record id="param_search_limit" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.search_limit</field>
+        <field name="value">50</field>
+    </record>
+
+    <record id="param_search_alpha" model="ir.config_parameter">
+        <field name="key">product_weaviate_search.search_alpha</field>
+        <field name="value">0.5</field>
+    </record>
+
+</odoo>

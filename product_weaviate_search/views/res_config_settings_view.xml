@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2025 Odoo Community Association (OCA) -->
+<!-- License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+
+    <record id="res_config_settings_view_form_weaviate" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.weaviate</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+            <app string="Weaviate" name="product_weaviate_search">
+
+                <block title="Connection">
+                    <setting string="Deployment Type">
+                        <field name="weaviate_deployment_type"/>
+                    </setting>
+
+                    <!-- Weaviate Cloud fields -->
+                    <setting
+                        string="Cluster URL"
+                        help="Your Weaviate Cloud cluster URL, e.g. https://xxx.weaviate.cloud"
+                        invisible="weaviate_deployment_type != 'cloud'"
+                    >
+                        <field name="weaviate_url" placeholder="https://xxx.weaviate.cloud"/>
+                    </setting>
+                    <setting
+                        string="Weaviate API Key"
+                        help="API key for Weaviate Cloud or secured custom instances."
+                    >
+                        <field name="weaviate_api_key" password="True"/>
+                    </setting>
+
+                    <!-- Custom connection fields -->
+                    <setting
+                        string="HTTP Host"
+                        help="Hostname for the HTTP API, e.g. localhost or weaviate."
+                        invisible="weaviate_deployment_type != 'custom'"
+                    >
+                        <field name="weaviate_http_host" placeholder="localhost"/>
+                    </setting>
+                    <setting
+                        string="HTTP Port"
+                        help="HTTP port. Typical: 80 (plain) or 443 (TLS)."
+                        invisible="weaviate_deployment_type != 'custom'"
+                    >
+                        <field name="weaviate_http_port"/>
+                    </setting>
+                    <setting
+                        string="HTTP Secure (HTTPS)"
+                        invisible="weaviate_deployment_type != 'custom'"
+                    >
+                        <field name="weaviate_http_secure"/>
+                    </setting>
+                    <setting
+                        string="gRPC Host"
+                        help="Hostname for the gRPC API. Defaults to HTTP host if empty."
+                        invisible="weaviate_deployment_type != 'custom'"
+                    >
+                        <field name="weaviate_grpc_host" placeholder="(same as HTTP host)"/>
+                    </setting>
+                    <setting
+                        string="gRPC Port"
+                        help="gRPC port. Typical: 50051 (plain) or 443 (TLS)."
+                        invisible="weaviate_deployment_type != 'custom'"
+                    >
+                        <field name="weaviate_grpc_port"/>
+                    </setting>
+                    <setting
+                        string="gRPC Secure"
+                        invisible="weaviate_deployment_type != 'custom'"
+                    >
+                        <field name="weaviate_grpc_secure"/>
+                    </setting>
+
+                    <!-- Always visible -->
+                    <setting
+                        string="OpenAI API Key"
+                        help="Used for text2vec-openai vectorization. Sent as X-OpenAI-Api-Key header."
+                    >
+                        <field name="weaviate_openai_api_key" password="True"/>
+                    </setting>
+                    <setting
+                        string="Collection Name"
+                        help="Name of the Weaviate collection that stores product vectors."
+                    >
+                        <field name="weaviate_collection_name" placeholder="OdooProduct"/>
+                    </setting>
+                </block>
+
+                <block title="Search Features">
+                    <setting
+                        string="Backend Product Search"
+                        help="Replace the product list view search bar with Weaviate hybrid search."
+                    >
+                        <field name="weaviate_backend_search_enabled"/>
+                        <div class="text-muted">
+                            Enable Weaviate search in the backend product list view.
+                        </div>
+                    </setting>
+                    <setting
+                        string="eCommerce Shop Search"
+                        help="Replace the /shop search with Weaviate hybrid search."
+                    >
+                        <field name="weaviate_shop_search_enabled"/>
+                        <div class="text-muted">
+                            Requires the <em>eCommerce</em> (website_sale) module.
+                        </div>
+                    </setting>
+                </block>
+
+                <block title="Search Tuning">
+                    <setting
+                        string="Result Limit"
+                        help="Maximum number of products returned per search query."
+                    >
+                        <field name="weaviate_search_limit"/>
+                    </setting>
+                    <setting
+                        string="Hybrid Alpha"
+                        help="0.0 = pure BM25 keyword search, 1.0 = pure vector search, 0.5 = balanced."
+                    >
+                        <field name="weaviate_search_alpha"/>
+                    </setting>
+                </block>
+
+            </app>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

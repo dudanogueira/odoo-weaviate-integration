@@ -1,0 +1,80 @@
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — Odoo database backend
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: odoo
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Odoo 19 — built from local Dockerfile to include weaviate-client
+  # ---------------------------------------------------------------------------
+  odoo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      weaviate:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+      - "8072:8072"   # live-chat / long-polling
+    volumes:
+      # Mount the addon directory into Odoo's extra-addons path.
+      - ../product_weaviate_search:/mnt/extra-addons/product_weaviate_search
+      - ./odoo.conf:/etc/odoo/odoo.conf
+      - odoo_data:/var/lib/odoo
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: odoo
+    command: odoo --config /etc/odoo/odoo.conf -i product_weaviate_search,sales -u product_weaviate_search,sales
+
+  # ---------------------------------------------------------------------------
+  # Weaviate vector database
+  # ---------------------------------------------------------------------------
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.36.1
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50051:50051"   # gRPC — required by weaviate-client v4
+    environment:
+      QUERY_DEFAULTS_LIMIT: "25"
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: text2vec-openai
+      ENABLE_MODULES: text2vec-openai
+      CLUSTER_HOSTNAME: node1
+      # The OpenAI API key is read from docker/.env  (copy .env.example → .env)
+      OPENAI_APIKEY: "${OPENAI_API_KEY}"
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/v1/.well-known/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+# ---------------------------------------------------------------------------
+# Volumes
+# ---------------------------------------------------------------------------
+volumes:
+  pgdata:
+  odoo_data:
+  weaviate_data:

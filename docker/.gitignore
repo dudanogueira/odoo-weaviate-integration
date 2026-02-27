@@ -1,0 +1,2 @@
+# Never commit the real .env file — it contains API keys.
+.env

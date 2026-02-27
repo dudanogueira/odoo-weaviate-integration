@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2025 Odoo Community Association (OCA) -->
+<!-- License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+
+    <record id="view_product_weaviate_sync_wizard_form" model="ir.ui.view">
+        <field name="name">product.weaviate.sync.wizard.form</field>
+        <field name="model">product.weaviate.sync.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Sync Products with Weaviate">
+                <field name="product_ids" invisible="1"/>
+                <group invisible="state == 'done'">
+                    <field name="mode" widget="radio"/>
+                    <div
+                        class="alert alert-info mb-0"
+                        invisible="mode != 'selected'"
+                    >
+                        <field name="product_count"/> product(s) selected for sync.
+                    </div>
+                </group>
+                <group invisible="state != 'done'">
+                    <field name="result_message" readonly="1" nolabel="1"/>
+                </group>
+                <footer>
+                    <button
+                        name="action_sync"
+                        string="Start Sync"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state == 'done'"
+                    />
+                    <button
+                        string="Close"
+                        class="btn-secondary"
+                        special="cancel"
+                    />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Server action to open the wizard from the product list Action menu -->
+    <record id="action_product_weaviate_sync" model="ir.actions.server">
+        <field name="name">Sync with Weaviate</field>
+        <field name="model_id" ref="product.model_product_template"/>
+        <field name="binding_model_id" ref="product.model_product_template"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+action = env['product.weaviate.sync.wizard'].action_open_wizard()
+        </field>
+    </record>
+
+</odoo>

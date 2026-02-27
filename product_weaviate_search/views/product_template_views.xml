@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2025 Odoo Community Association (OCA) -->
+<!-- License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+
+    <!-- Add the weaviate_uuid field to the product form view under a
+         technical tab, visible only to System administrators. -->
+    <record id="product_template_form_view_weaviate" model="ir.ui.view">
+        <field name="name">product.template.form.weaviate</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page
+                    string="Weaviate"
+                    name="weaviate"
+                    groups="base.group_system"
+                >
+                    <group>
+                        <field name="weaviate_uuid" readonly="1"/>
+                    </group>
+                    <p class="text-muted">
+                        This UUID is assigned automatically when the product is
+                        synced to the Weaviate vector database. Use the
+                        <strong>Sync with Weaviate</strong> action from the
+                        product list to trigger a bulk sync.
+                    </p>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Add Weaviate score column to the product template list view.
+         optional="show" keeps it visible by default; users can hide it
+         via the column visibility toggle. -->
+    <record id="product_template_tree_view_weaviate" model="ir.ui.view">
+        <field name="name">product.template.tree.weaviate</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field
+                    name="weaviate_search_score"
+                    string="Score"
+                    widget="float"
+                    digits="[16, 4]"
+                    optional="show"
+                    decoration-muted="weaviate_search_score == 0"
+                />
+            </xpath>
+        </field>
+    </record>
+
+
+    <!-- Add Weaviate / Standard search toggle filters to the product search view. -->
+    <record id="product_template_search_view_weaviate" model="ir.ui.view">
+        <field name="name">product.template.search.weaviate</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter
+                    name="weaviate_search_on"
+                    string="Weaviate Search"
+                    context="{'weaviate_search': True}"
+                />
+                <filter
+                    name="weaviate_search_off"
+                    string="Standard Search"
+                    context="{'weaviate_search': False}"
+                />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

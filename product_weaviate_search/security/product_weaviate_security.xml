@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2025 Odoo Community Association (OCA) -->
+<!-- License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
+<odoo>
+    <!-- No custom security groups are required; access to the sync wizard
+         is governed by the standard Odoo base groups checked in the views. -->
+</odoo>
