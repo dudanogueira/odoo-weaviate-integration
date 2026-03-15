@@ -14,6 +14,18 @@ _BOOL_PARAMS = [
     "weaviate_shop_search_enabled",
 ]
 
+# Integer and Float parameters handled explicitly to avoid silent failures with
+# the config_parameter shortcut when get_values/set_values is overridden.
+# Format: field_name -> (ir.config_parameter key, cast callable, default value)
+_NUMERIC_PARAMS = {
+    "weaviate_http_port": ("product_weaviate_search.http_port", int, 8080),
+    "weaviate_grpc_port": ("product_weaviate_search.grpc_port", int, 50051),
+    "weaviate_search_limit": ("product_weaviate_search.search_limit", int, 50),
+    "weaviate_search_alpha": ("product_weaviate_search.search_alpha", float, 0.5),
+    "weaviate_shop_search_limit": ("product_weaviate_search.shop_search_limit", int, 0),
+    "weaviate_shop_search_autocut": ("product_weaviate_search.shop_search_autocut", int, 0),
+}
+
 
 class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
@@ -49,7 +61,6 @@ class ResConfigSettings(models.TransientModel):
     )
     weaviate_http_port = fields.Integer(
         string="HTTP Port",
-        config_parameter="product_weaviate_search.http_port",
         default=8080,
         help="HTTP port. Default is 8080 for local; WCD uses 443.",
     )
@@ -70,7 +81,6 @@ class ResConfigSettings(models.TransientModel):
     )
     weaviate_grpc_port = fields.Integer(
         string="gRPC Port",
-        config_parameter="product_weaviate_search.grpc_port",
         default=50051,
         help="gRPC port. Default is 50051 for local; WCD uses 443.",
     )
@@ -141,18 +151,33 @@ class ResConfigSettings(models.TransientModel):
 
     weaviate_search_limit = fields.Integer(
         string="Search Result Limit",
-        config_parameter="product_weaviate_search.search_limit",
         default=50,
         help="Maximum number of product results returned per Weaviate search query.",
     )
     weaviate_search_alpha = fields.Float(
         string="Hybrid Search Alpha",
-        config_parameter="product_weaviate_search.search_alpha",
         default=0.5,
         help=(
             "Controls the balance between BM25 keyword search (0.0) and "
             "pure vector similarity search (1.0). "
             "0.5 gives equal weight to both."
+        ),
+    )
+    weaviate_shop_search_limit = fields.Integer(
+        string="eCommerce Search Limit",
+        default=0,
+        help=(
+            "Maximum number of products returned by the eCommerce shop search. "
+            "Set to 0 to use the global Search Result Limit above."
+        ),
+    )
+    weaviate_shop_search_autocut = fields.Integer(
+        string="eCommerce Autocut",
+        default=0,
+        help=(
+            "Automatically cut results after N consecutive score drops. "
+            "Useful for returning only highly relevant products in the shop. "
+            "Set to 0 to disable (return all results up to the limit)."
         ),
     )
 
@@ -168,6 +193,9 @@ class ResConfigSettings(models.TransientModel):
             key = f"product_weaviate_search.{fname.removeprefix('weaviate_')}"
             # Compare to the literal string "True" — never use bool(str_value).
             res[fname] = get_param(key, "False") == "True"
+        for fname, (key, cast, default) in _NUMERIC_PARAMS.items():
+            raw = get_param(key)
+            res[fname] = cast(raw) if raw else default
         return res
 
     def set_values(self):
@@ -175,6 +203,8 @@ class ResConfigSettings(models.TransientModel):
         set_param = self.env["ir.config_parameter"].sudo().set_param
         for fname in _BOOL_PARAMS:
             key = f"product_weaviate_search.{fname.removeprefix('weaviate_')}"
+            set_param(key, str(self[fname]))
+        for fname, (key, _cast, _default) in _NUMERIC_PARAMS.items():
             set_param(key, str(self[fname]))
 
     # ------------------------------------------------------------------

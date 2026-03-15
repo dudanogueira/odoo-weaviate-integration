@@ -132,6 +132,25 @@
                     >
                         <field name="weaviate_search_alpha"/>
                     </setting>
+                    <setting
+                        string="eCommerce Search Limit"
+                        help="Maximum products returned in the /shop search. 0 = use the global Result Limit above."
+                    >
+                        <field name="weaviate_shop_search_limit"/>
+                        <div class="text-muted">
+                            Set to <strong>0</strong> to inherit the global Result Limit.
+                        </div>
+                    </setting>
+                    <setting
+                        string="eCommerce Autocut"
+                        help="Stop returning results after N consecutive drops in relevance score. 0 = disabled."
+                    >
+                        <field name="weaviate_shop_search_autocut"/>
+                        <div class="text-muted">
+                            Cuts low-relevance products from shop results automatically.
+                            <strong>0</strong> disables autocut.
+                        </div>
+                    </setting>
                 </block>
 
                 <block title="Product Sync">

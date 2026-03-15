@@ -327,7 +327,7 @@ class WeaviateService:
     # ------------------------------------------------------------------
 
     def hybrid_search(
-        self, query: str, limit: int = None, alpha: float = None
+        self, query: str, limit: int = None, alpha: float = None, autocut: int = None
     ) -> dict:
         """
         Perform hybrid (vector + BM25) search against the product collection.
@@ -340,11 +340,18 @@ class WeaviateService:
         :param limit: Override the configured result limit.
         :param alpha: Override the configured BM25/vector balance
                       (0.0 = pure BM25, 1.0 = pure vector).
+        :param autocut: Stop returning results after N consecutive score drops.
+                        ``None`` or ``0`` disables autocut.
         """
         from weaviate.classes.query import Filter, HybridFusion, MetadataQuery
 
-        effective_limit = limit if limit is not None else self.search_limit
         effective_alpha = alpha if alpha is not None else self.search_alpha
+        effective_autocut = autocut if autocut else None
+        # When autocut is active, omit limit — Weaviate uses the less
+        # restrictive of the two, which would defeat the purpose of autocut.
+        effective_limit = None if effective_autocut else (
+            limit if limit is not None else self.search_limit
+        )
 
         with self._get_client() as client:
             col = client.collections.get(self.collection_name)
@@ -353,6 +360,7 @@ class WeaviateService:
                 alpha=effective_alpha,
                 fusion_type=HybridFusion.RELATIVE_SCORE,
                 limit=effective_limit,
+                auto_limit=effective_autocut,
                 return_properties=["odoo_id"],
                 return_metadata=MetadataQuery(score=True),
                 # Only return active products — mirrors Odoo's default active filter

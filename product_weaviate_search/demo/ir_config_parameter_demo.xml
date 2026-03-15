@@ -11,7 +11,7 @@
     HTTP and gRPC ports are already seeded at 8080 / 50051 by
     data/ir_config_parameter_data.xml and match the Docker stack defaults.
 -->
-<odoo>
+<odoo noupdate="1">
 
     <!-- Point both HTTP and gRPC at the Docker service named "weaviate". -->
     <record id="param_http_host_demo" model="ir.config_parameter">
