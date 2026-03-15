@@ -18,12 +18,10 @@ _BOOL_PARAMS = [
 # the config_parameter shortcut when get_values/set_values is overridden.
 # Format: field_name -> (ir.config_parameter key, cast callable, default value)
 _NUMERIC_PARAMS = {
-    "weaviate_http_port": ("product_weaviate_search.http_port", int, 8080),
-    "weaviate_grpc_port": ("product_weaviate_search.grpc_port", int, 50051),
     "weaviate_search_limit": ("product_weaviate_search.search_limit", int, 50),
     "weaviate_search_alpha": ("product_weaviate_search.search_alpha", float, 0.5),
+    "weaviate_search_autocut": ("product_weaviate_search.search_autocut", int, 0),
     "weaviate_shop_search_limit": ("product_weaviate_search.shop_search_limit", int, 0),
-    "weaviate_shop_search_autocut": ("product_weaviate_search.shop_search_autocut", int, 0),
 }
 
 
@@ -59,9 +57,10 @@ class ResConfigSettings(models.TransientModel):
         config_parameter="product_weaviate_search.http_host",
         help="Hostname for the HTTP API connection, e.g. localhost or weaviate.",
     )
-    weaviate_http_port = fields.Integer(
+    weaviate_http_port = fields.Char(
         string="HTTP Port",
-        default=8080,
+        config_parameter="product_weaviate_search.http_port",
+        default="8080",
         help="HTTP port. Default is 8080 for local; WCD uses 443.",
     )
     # NOTE: no config_parameter — handled manually in get_values/set_values
@@ -79,9 +78,10 @@ class ResConfigSettings(models.TransientModel):
             "Defaults to HTTP host if left empty."
         ),
     )
-    weaviate_grpc_port = fields.Integer(
+    weaviate_grpc_port = fields.Char(
         string="gRPC Port",
-        default=50051,
+        config_parameter="product_weaviate_search.grpc_port",
+        default="50051",
         help="gRPC port. Default is 50051 for local; WCD uses 443.",
     )
     # NOTE: no config_parameter — handled manually (same reason as http_secure).
@@ -171,12 +171,12 @@ class ResConfigSettings(models.TransientModel):
             "Set to 0 to use the global Search Result Limit above."
         ),
     )
-    weaviate_shop_search_autocut = fields.Integer(
-        string="eCommerce Autocut",
+    weaviate_search_autocut = fields.Integer(
+        string="Autocut",
         default=0,
         help=(
             "Automatically cut results after N consecutive score drops. "
-            "Useful for returning only highly relevant products in the shop. "
+            "Applies to both backend and eCommerce shop searches. "
             "Set to 0 to disable (return all results up to the limit)."
         ),
     )

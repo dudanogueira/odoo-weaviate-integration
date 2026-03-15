@@ -58,13 +58,13 @@ try:
                 shop_limit = int(
                     get_param("product_weaviate_search.shop_search_limit", "0") or 0
                 )
-                shop_autocut = int(
-                    get_param("product_weaviate_search.shop_search_autocut", "0") or 0
+                autocut = int(
+                    get_param("product_weaviate_search.search_autocut", "0") or 0
                 )
                 score_map = svc.hybrid_search(
                     search,
                     limit=shop_limit or None,
-                    autocut=shop_autocut or None,
+                    autocut=autocut or None,
                 )
                 if not score_map:
                     return super()._shop_lookup_products(

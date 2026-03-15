@@ -33,7 +33,7 @@
     <!-- Custom connection (connect_to_custom) -->
     <record id="param_http_host" model="ir.config_parameter">
         <field name="key">product_weaviate_search.http_host</field>
-        <field name="value"></field>
+        <field name="value">weaviate</field>
     </record>
 
     <record id="param_http_port" model="ir.config_parameter">
@@ -48,7 +48,7 @@
 
     <record id="param_grpc_host" model="ir.config_parameter">
         <field name="key">product_weaviate_search.grpc_host</field>
-        <field name="value"></field>
+        <field name="value">weaviate</field>
     </record>
 
     <record id="param_grpc_port" model="ir.config_parameter">
@@ -94,14 +94,5 @@
         <field name="value">0.5</field>
     </record>
 
-    <record id="param_shop_search_limit" model="ir.config_parameter">
-        <field name="key">product_weaviate_search.shop_search_limit</field>
-        <field name="value">0</field>
-    </record>
-
-    <record id="param_shop_search_autocut" model="ir.config_parameter">
-        <field name="key">product_weaviate_search.shop_search_autocut</field>
-        <field name="value">0</field>
-    </record>
 
 </odoo>

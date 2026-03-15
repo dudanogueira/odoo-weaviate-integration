@@ -243,7 +243,9 @@ class ProductTemplate(models.Model):
             if not svc:
                 return super()._search(domain, offset=offset, limit=limit, order=order, **kwargs)
 
-            score_map = svc.hybrid_search(query_text)
+            get_param = self.env["ir.config_parameter"].sudo().get_param
+            autocut = int(get_param("product_weaviate_search.search_autocut", "0") or 0)
+            score_map = svc.hybrid_search(query_text, autocut=autocut or None)
             _logger.info(
                 "WeaviateSearch: query=%r  results=%d  scores=%s",
                 query_text,

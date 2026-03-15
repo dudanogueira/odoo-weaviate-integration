@@ -43,7 +43,7 @@ services:
       HOST: db
       USER: odoo
       PASSWORD: odoo
-    command: odoo --config /etc/odoo/odoo.conf -i product_weaviate_search,sales -u product_weaviate_search,sales
+    command: odoo --config /etc/odoo/odoo.conf -i product_weaviate_search,sale_management -u product_weaviate_search,sale_management
 
   # ---------------------------------------------------------------------------
   # Weaviate vector database

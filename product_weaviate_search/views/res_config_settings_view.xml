@@ -142,12 +142,13 @@
                         </div>
                     </setting>
                     <setting
-                        string="eCommerce Autocut"
-                        help="Stop returning results after N consecutive drops in relevance score. 0 = disabled."
+                        string="Autocut"
+                        help="Stop returning results after N consecutive drops in relevance score. Applies to backend and eCommerce searches. 0 = disabled."
                     >
-                        <field name="weaviate_shop_search_autocut"/>
+                        <field name="weaviate_search_autocut"/>
                         <div class="text-muted">
-                            Cuts low-relevance products from shop results automatically.
+                            Cuts low-relevance products automatically.
+                            Applies to <strong>both</strong> backend and eCommerce searches.
                             <strong>0</strong> disables autocut.
                         </div>
                     </setting>

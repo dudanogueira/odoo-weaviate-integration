@@ -2,26 +2,8 @@
 <!-- Copyright 2025 Odoo Community Association (OCA) -->
 <!-- License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl). -->
 <!--
-    Demo data: pre-fills the Weaviate connection for the included Docker
-    Compose development stack (docker/docker-compose.yml).
-
-    After loading this data, only the OpenAI API key needs to be entered
-    manually in Settings → Weaviate → OpenAI API Key.
-
-    HTTP and gRPC ports are already seeded at 8080 / 50051 by
-    data/ir_config_parameter_data.xml and match the Docker stack defaults.
+    HTTP host, gRPC host and ports are already seeded with Docker stack
+    defaults ("weaviate", 8080, 50051) by data/ir_config_parameter_data.xml.
+    No additional demo data is needed.
 -->
-<odoo noupdate="1">
-
-    <!-- Point both HTTP and gRPC at the Docker service named "weaviate". -->
-    <record id="param_http_host_demo" model="ir.config_parameter">
-        <field name="key">product_weaviate_search.http_host</field>
-        <field name="value">weaviate</field>
-    </record>
-
-    <record id="param_grpc_host_demo" model="ir.config_parameter">
-        <field name="key">product_weaviate_search.grpc_host</field>
-        <field name="value">weaviate</field>
-    </record>
-
-</odoo>
+<odoo noupdate="1"/>
