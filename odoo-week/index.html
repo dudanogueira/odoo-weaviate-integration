@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Odoo Week — Introdução ao Odoo e a Anatomia de um Addon</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/tokyo-night-dark.min.css" />
+  <style>
+    :root {
+      --odoo-purple:  #714B67;
+      --odoo-teal:    #00A09D;
+      --odoo-bg:      #1E1022;
+      --odoo-light:   #C5A8BE;
+      --wv-green:     #00BC8C;
+      --wv-bg:        #0B1623;
+      --wv-light:     #7BE0C0;
+    }
+
+    /* ── typography ── */
+    .reveal { font-family: 'Segoe UI', system-ui, sans-serif; }
+    .reveal h1 { font-size: 2.1em; font-weight: 800; line-height: 1.15; }
+    .reveal h2 { font-size: 1.55em; font-weight: 700; margin-bottom: .4em; }
+    .reveal h3 { font-size: 1.1em; }
+    .reveal p  { margin: .4em 0; }
+    .reveal ul { padding-left: 1.2em; }
+    .reveal li { margin: .3em 0; }
+    code { font-family: 'Fira Code', 'Courier New', monospace; }
+
+    /* ── badges ── */
+    .badge {
+      display: inline-block; border-radius: 20px;
+      padding: 3px 14px; font-size: .55em; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: .8rem;
+    }
+    .badge-odoo    { background: var(--odoo-purple); color: #fff; }
+    .badge-wv      { background: var(--wv-green);    color: #0B1623; }
+    .badge-mixed   { background: linear-gradient(90deg,#714B67,#00BC8C); color: #fff; }
+
+    /* ── cards ── */
+    .card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 10px; padding: 14px 18px; margin: 8px 0;
+    }
+    .card-o { border-left: 4px solid var(--odoo-teal); }
+    .card-w { border-left: 4px solid var(--wv-green); }
+    .card-r { border-left: 4px solid #FF6B6B; }
+
+    /* ── grids ── */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    /* ── steps ── */
+    .step {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(255,255,255,.035); border-radius: 8px;
+      padding: 10px 14px; margin: 7px 0; text-align: left;
+    }
+    .num {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1em; flex-shrink: 0;
+    }
+    .num-o { background: var(--odoo-teal);  color: #fff; }
+    .num-w { background: var(--wv-green);   color: #0B1623; }
+
+    /* ── tags / pills ── */
+    .tag {
+      display: inline-block; border-radius: 4px; margin: 2px;
+      padding: 2px 9px; font-size: .52em; font-family: monospace;
+    }
+    .tag-o { background: rgba(113,75,103,.3); border: 1px solid #714B67; color: var(--odoo-light); }
+    .tag-w { background: rgba(0,188,140,.15); border: 1px solid var(--wv-green); color: var(--wv-light); }
+
+    /* ── section number watermark ── */
+    .watermark {
+      position: absolute; top: -30px; right: -20px;
+      font-size: 7em; font-weight: 900; opacity: .055; pointer-events: none;
+      line-height: 1;
+    }
+
+    /* ── code blocks ── */
+    .reveal pre { box-shadow: none; border-radius: 8px; font-size: .54em; }
+    .reveal pre code { border-radius: 8px; padding: 18px !important; max-height: 370px; }
+
+    /* ── file tree ── */
+    .tree {
+      font-family: 'Fira Code','Courier New',monospace; font-size: .68em;
+      text-align: left; background: rgba(0,0,0,.35); border-radius: 8px;
+      padding: 18px 22px; line-height: 1.9;
+    }
+    .tree .d  { color: var(--odoo-teal); font-weight: 700; }
+    .tree .hi { color: #FFB347; font-weight: 700; }
+    .tree .f  { color: #ccc; }
+
+    /* ── comparison ── */
+    .cmp-bad  { border-left: 4px solid #FF6B6B; background: rgba(255,107,107,.05); border-radius:8px; padding:14px; text-align:left; }
+    .cmp-good { border-left: 4px solid var(--wv-green); background: rgba(0,188,140,.05); border-radius:8px; padding:14px; text-align:left; }
+
+    /* ── gradient text ── */
+    .grad-o { background: linear-gradient(90deg,#714B67,#00A09D); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .grad-w { background: linear-gradient(90deg,#00BC8C,#7BE0C0); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .grad-m { background: linear-gradient(90deg,#714B67,#00A09D,#00BC8C); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+    /* ── divider ── */
+    .div-o { height:4px; width:70px; background:linear-gradient(90deg,#714B67,#00A09D); border-radius:2px; margin:.7em auto; }
+    .div-w { height:4px; width:70px; background:linear-gradient(90deg,#00BC8C,#7BE0C0); border-radius:2px; margin:.7em auto; }
+    .div-m { height:4px; width:70px; background:linear-gradient(90deg,#714B67,#00BC8C); border-radius:2px; margin:.7em auto; }
+
+    /* ── aside ── */
+    .aside { font-size:.55em; color:rgba(255,255,255,.45); font-style:italic; margin-top:.7em; }
+
+    /* ── agenda ── */
+    .agenda-row {
+      display:flex; align-items:center; gap:18px;
+      padding:13px 18px; border-radius:10px; margin:8px 0;
+      background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.07);
+      text-align:left;
+    }
+    .agenda-icon { font-size:1.7em; min-width:44px; text-align:center; }
+    .agenda-row h4 { margin:0; font-size:.95em; color:#fff; }
+    .agenda-row p  { margin:3px 0 0; font-size:.72em; color:rgba(255,255,255,.45); }
+
+    /* slide number */
+    .reveal .slide-number { font-size:.5em; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ═══════════════════════════════════════════
+     CAPA
+═══════════════════════════════════════════ -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 60%,#1A0E1E 100%)">
+  <div style="position:relative">
+    <div class="watermark">ODOO</div>
+    <div class="badge badge-odoo">Odoo Week 2025</div>
+    <h1>Introdução ao Odoo<br><span class="grad-o">e a Anatomia<br>de um Addon</span></h1>
+    <div class="div-o"></div>
+    <p style="font-size:.68em; color:rgba(255,255,255,.45)">
+      Como o Weaviate turbina a busca do e-commerce<br>sem alterar uma linha do Odoo core
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     AGENDA
+═══════════════════════════════════════════ -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>Agenda</h2>
+  <div class="agenda-row" style="border-color:rgba(113,75,103,.35)">
+    <div class="agenda-icon">🐳</div>
+    <div><h4>Instalando o Odoo</h4><p>Docker Compose, serviços, primeiro acesso, instalando aplicativos</p></div>
+  </div>
+  <div class="agenda-row" style="border-color:rgba(0,160,157,.35)">
+    <div class="agenda-icon">🧩</div>
+    <div><h4>Anatomia de um Addon</h4><p>Models, Views, Controllers, Herança Python &amp; XML</p></div>
+  </div>
+  <div class="agenda-row" style="border-color:rgba(0,188,140,.35)">
+    <div class="agenda-icon">🔍</div>
+    <div><h4>Bancos de Dados Vetoriais</h4><p>Embeddings, busca semântica, hybrid search, Weaviate</p></div>
+  </div>
+  <div class="agenda-row" style="border-color:rgba(0,188,140,.35)">
+    <div class="agenda-icon">🤖</div>
+    <div><h4>A Integração</h4><p>Como o módulo altera a busca do e-commerce sem modificar o core</p></div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     BLOCO 1 — INSTALANDO
+═══════════════════════════════════════════ -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <div style="position:relative">
+    <div class="watermark">1</div>
+    <div class="badge badge-odoo">Parte 1</div>
+    <h1>Instalando<br><span style="color:var(--odoo-teal)">o Odoo</span></h1>
+  </div>
+</section>
+
+<!-- O que é Odoo -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>O que é o Odoo?</h2>
+  <div class="g2" style="margin-top:.8em">
+    <div>
+      <div class="card card-o">
+        <div style="font-size:1.3em;margin-bottom:6px">📦</div>
+        <strong>ERP Modular Open Source</strong>
+        <p style="font-size:.68em;color:rgba(255,255,255,.6);margin:8px 0 0">Gestão completa: vendas, estoque, contabilidade, RH, e-commerce, CRM…</p>
+      </div>
+      <div class="card card-o" style="margin-top:8px">
+        <div style="font-size:1.3em;margin-bottom:6px">🐍</div>
+        <strong>Python + PostgreSQL</strong>
+        <p style="font-size:.68em;color:rgba(255,255,255,.6);margin:8px 0 0">Framework próprio com ORM, QWeb templates e sistema de módulos</p>
+      </div>
+    </div>
+    <div>
+      <div class="card card-o">
+        <div style="font-size:1.3em;margin-bottom:6px">🏪</div>
+        <strong>+40.000 módulos</strong>
+        <p style="font-size:.68em;color:rgba(255,255,255,.6);margin:8px 0 0">Odoo Apps Store com módulos da comunidade e parceiros certificados</p>
+      </div>
+      <div class="card card-o" style="margin-top:8px">
+        <div style="font-size:1.3em;margin-bottom:6px">⚖️</div>
+        <strong>Community + Enterprise</strong>
+        <p style="font-size:.68em;color:rgba(255,255,255,.6);margin:8px 0 0">LGPL livre para uso. Enterprise com módulos extras e suporte oficial</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Nossa Stack Docker -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>Nossa Stack Docker</h2>
+  <div class="g3" style="margin-top:.8em">
+    <div class="card card-o" style="text-align:left">
+      <div style="font-size:1.8em">🐘</div>
+      <strong style="color:var(--odoo-teal)">PostgreSQL 16</strong>
+      <p style="font-size:.62em;color:rgba(255,255,255,.6);margin:8px 0 0">Banco relacional do Odoo.<br>Porta: 5432</p>
+      <span class="tag tag-o">db</span>
+    </div>
+    <div class="card card-o" style="text-align:left">
+      <div style="font-size:1.8em">⚙️</div>
+      <strong style="color:var(--odoo-teal)">Odoo 19</strong>
+      <p style="font-size:.62em;color:rgba(255,255,255,.6);margin:8px 0 0">Aplicação principal.<br>Porta: 8069</p>
+      <span class="tag tag-o">odoo</span>
+    </div>
+    <div class="card card-w" style="text-align:left">
+      <div style="font-size:1.8em">🔍</div>
+      <strong style="color:var(--wv-green)">Weaviate 1.36</strong>
+      <p style="font-size:.62em;color:rgba(255,255,255,.6);margin:8px 0 0">Banco vetorial com text2vec-openai.<br>Porta: 8080</p>
+      <span class="tag tag-w">weaviate</span>
+    </div>
+  </div>
+  <pre style="margin-top:.9em"><code class="language-yaml" data-trim>services:
+  db:
+    image: postgres:16
+  odoo:
+    build: ./docker
+    ports: ["8069:8069"]
+    depends_on: [db, weaviate]
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.36.1
+    environment:
+      DEFAULT_VECTORIZER_MODULE: text2vec-openai
+      OPENAI_APIKEY: ${OPENAI_API_KEY}</code></pre>
+</section>
+
+<!-- Subindo o ambiente -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>Subindo o Ambiente</h2>
+  <div style="margin-top:.8em">
+    <div class="step">
+      <div class="num num-o">1</div>
+      <div>
+        <code style="font-size:.8em;color:#FFB347">cp docker/.env.example docker/.env</code>
+        <div style="font-size:.6em;color:rgba(255,255,255,.45);margin-top:3px">Configure sua <code>OPENAI_API_KEY</code></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num num-o">2</div>
+      <div>
+        <code style="font-size:.78em;color:#FFB347">docker compose -f docker/docker-compose.yml up -d</code>
+        <div style="font-size:.6em;color:rgba(255,255,255,.45);margin-top:3px">Sobe os 3 contêineres em background</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num num-o">3</div>
+      <div>
+        <span style="font-size:.8em">Acesse <code style="color:var(--odoo-teal)">http://localhost:8069</code></span>
+        <div style="font-size:.6em;color:rgba(255,255,255,.45);margin-top:3px">Crie o banco de dados com dados de demonstração</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num num-o">4</div>
+      <div>
+        <span style="font-size:.8em">Menu <code style="color:var(--odoo-teal)">Apps</code> → Buscar <code style="color:#FFB347">"Product Weaviate Search"</code> → Instalar</span>
+        <div style="font-size:.6em;color:rgba(255,255,255,.45);margin-top:3px">O Odoo instala o módulo e todas as dependências automaticamente</div>
+      </div>
+    </div>
+  </div>
+  <div class="aside">💡 Os dados demo pré-configuram a conexão com o Weaviate local automaticamente</div>
+</section>
+
+<!-- Como o Odoo instala Apps -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>O que Acontece ao Instalar um App</h2>
+  <div class="g2" style="margin-top:.8em">
+    <div>
+      <div class="card card-o">
+        <strong>Sequência de instalação:</strong>
+        <ul style="font-size:.68em;margin:10px 0 0;line-height:2">
+          <li>Lê o <code>__manifest__.py</code></li>
+          <li>Instala dependências (<code>depends</code>)</li>
+          <li>Executa <code>models</code> → cria tabelas no PG</li>
+          <li>Carrega <code>views</code> e <code>security</code></li>
+          <li>Roda arquivos de <code>data</code> e <code>demo</code></li>
+          <li>Registra rotas dos <code>controllers</code></li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card card-o">
+        <strong>De onde vêm os módulos:</strong>
+        <ul style="font-size:.68em;margin:10px 0 0;line-height:2">
+          <li>Pasta local no <code>addons_path</code></li>
+          <li>Odoo Apps Store (cloud)</li>
+          <li>Upload de arquivo <code>.zip</code></li>
+          <li>Git + symlink (desenvolvimento)</li>
+        </ul>
+      </div>
+      <div class="card card-o" style="margin-top:8px">
+        <strong style="color:#FFB347">Atualizar um módulo:</strong>
+        <p style="font-size:.65em;margin:6px 0 0;color:rgba(255,255,255,.7)">
+          Apps → filtrar "Instalados" → Atualizar<br>
+          ou via CLI: <code style="color:var(--odoo-teal)">-u nome_modulo</code>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     BLOCO 2 — ANATOMIA
+═══════════════════════════════════════════ -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <div style="position:relative">
+    <div class="watermark">2</div>
+    <div class="badge badge-odoo">Parte 2</div>
+    <h1>Anatomia de<br><span style="color:var(--odoo-teal)">um Addon</span></h1>
+  </div>
+</section>
+
+<!-- Estrutura do módulo -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>Estrutura do Nosso Módulo</h2>
+  <div class="g2" style="margin-top:.5em">
+    <div class="tree">
+product_weaviate_search/
+├── <span class="hi">__manifest__.py</span>   ← identidade
+├── __init__.py
+│
+├── <span class="d">models/</span>           ← dados &amp; lógica
+│   ├── product_template.py
+│   └── res_config_settings.py
+│
+├── <span class="d">views/</span>            ← interface
+│   ├── product_views.xml
+│   └── res_config_settings.xml
+│
+├── <span class="d">controllers/</span>      ← rotas HTTP
+│   └── website_sale.py
+│
+├── <span class="d">wizard/</span>           ← ações do usuário
+│   └── product_weaviate_sync_wizard.py
+│
+├── <span class="d">services/</span>         ← cliente weaviate
+├── <span class="d">security/</span>         ← permissões
+├── <span class="d">data/</span>             ← dados iniciais
+└── <span class="d">demo/</span>             ← dados de demo
+    </div>
+    <div style="text-align:left">
+      <div class="card card-o" style="font-size:.72em">
+        <strong style="color:var(--odoo-teal)">models/</strong>
+        <p style="margin:5px 0 0;color:rgba(255,255,255,.65)">Herda <code>product.template</code>, adiciona campos e sobrescreve <code>_search()</code></p>
+      </div>
+      <div class="card card-o" style="font-size:.72em;margin-top:7px">
+        <strong style="color:var(--odoo-teal)">views/</strong>
+        <p style="margin:5px 0 0;color:rgba(255,255,255,.65)">Injeta campos na tela de produto via herança XML. A view original não é tocada.</p>
+      </div>
+      <div class="card card-o" style="font-size:.72em;margin-top:7px">
+        <strong style="color:var(--odoo-teal)">controllers/</strong>
+        <p style="margin:5px 0 0;color:rgba(255,255,255,.65)">Herda <code>WebsiteSale</code> e intercepta a rota <code>/shop</code> do e-commerce</p>
+      </div>
+      <div class="card card-o" style="font-size:.72em;margin-top:7px">
+        <strong style="color:var(--odoo-teal)">services/</strong>
+        <p style="margin:5px 0 0;color:rgba(255,255,255,.65)">Classe stateless que encapsula toda comunicação com o Weaviate</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- __manifest__.py -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>O Cartão de Visita: <code>__manifest__.py</code></h2>
+  <pre style="margin-top:.5em"><code class="language-python" data-trim>{
+    'name': 'Product Weaviate Search',
+    'version': '19.0.1.0.0',
+    'summary': 'AI-powered semantic product search via Weaviate',
+    'author': 'Duda Nogueira',
+    'license': 'AGPL-3',
+
+    # Módulos Odoo necessários
+    'depends': ['product', 'base_setup'],
+
+    # Dependência Python externa
+    'external_dependencies': {'python': ['weaviate']},
+
+    # Arquivos carregados na instalação
+    'data': [
+        'security/ir.model.access.csv',
+        'views/res_config_settings.xml',
+        'views/product_views.xml',
+        'wizard/product_weaviate_sync_wizard.xml',
+    ],
+    'demo': ['demo/demo_data.xml'],
+
+    # website_sale é opcional — carregado via try/except
+    'installable': True,
+    'application': False,
+}</code></pre>
+  <div class="aside">💡 <code>depends</code> garante que os módulos necessários são instalados antes deste</div>
+</section>
+
+<!-- Models & ORM: herança Python -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>Models &amp; ORM: Herança Python</h2>
+  <div class="g2" style="margin-top:.5em;gap:14px">
+    <div>
+      <div style="font-size:.58em;color:rgba(255,255,255,.45);margin-bottom:5px">➕ Criar novo modelo</div>
+      <pre><code class="language-python" data-trim>class MinhaTabela(models.Model):
+    _name = 'minha.tabela'
+    _description = 'Minha Tabela'
+
+    name  = fields.Char('Nome')
+    valor = fields.Float('Valor')</code></pre>
+      <p style="font-size:.58em;color:rgba(255,255,255,.38);margin-top:5px">→ Cria uma nova tabela no PostgreSQL</p>
+    </div>
+    <div>
+      <div style="font-size:.58em;color:rgba(255,255,255,.45);margin-bottom:5px">🔧 Estender modelo existente</div>
+      <pre><code class="language-python" data-trim>class ProductTemplate(models.Model):
+    _inherit = 'product.template'
+
+    # Campo novo adicionado ao modelo
+    weaviate_uuid = fields.Char(
+        'Weaviate UUID',
+        readonly=True,
+        copy=False,
+    )
+    weaviate_search_score = fields.Float(
+        compute='_compute_weaviate_score',
+    )</code></pre>
+      <p style="font-size:.58em;color:rgba(255,255,255,.38);margin-top:5px">→ Adiciona colunas na tabela existente</p>
+    </div>
+  </div>
+  <div class="card card-o" style="margin-top:10px;font-size:.7em;text-align:left">
+    <strong style="color:var(--odoo-teal)">_inherit</strong> é o poder central do Odoo:
+    adiciona campos e sobrescreve métodos <em>sem tocar no código original</em>.
+    O modelo original continua intacto e recebe atualizações normalmente.
+  </div>
+</section>
+
+<!-- Views & QWeb: herança XML -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>Views &amp; QWeb: Herança XML</h2>
+  <div class="g2" style="margin-top:.5em;gap:14px">
+    <div>
+      <div style="font-size:.58em;color:rgba(255,255,255,.45);margin-bottom:5px">View original (módulo <code>product</code>)</div>
+      <pre><code class="language-xml" data-trim>&lt;form id="product_template_form_view"&gt;
+  &lt;sheet&gt;
+    &lt;group&gt;
+      &lt;field name="name"/&gt;
+      &lt;field name="list_price"/&gt;
+    &lt;/group&gt;
+    &lt;!-- ... --&gt;
+  &lt;/sheet&gt;
+&lt;/form&gt;</code></pre>
+    </div>
+    <div>
+      <div style="font-size:.58em;color:rgba(255,255,255,.45);margin-bottom:5px">Injetando nosso campo via herança</div>
+      <pre><code class="language-xml" data-trim>&lt;record model="ir.ui.view"&gt;
+  &lt;!-- Referencia a view original --&gt;
+  &lt;field name="inherit_id" ref=
+    "product.product_template_form_view"/&gt;
+
+  &lt;field name="arch" type="xml"&gt;
+    &lt;!-- XPath: onde injetar --&gt;
+    &lt;xpath expr="//field[@name='name']"
+           position="after"&gt;
+      &lt;field name="weaviate_uuid"
+             readonly="1"/&gt;
+    &lt;/xpath&gt;
+  &lt;/field&gt;
+&lt;/record&gt;</code></pre>
+    </div>
+  </div>
+  <div class="aside">💡 A view original não é modificada. O Odoo mescla as heranças em runtime.</div>
+</section>
+
+<!-- Controllers: herança de rotas -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>Controllers: Herança de Rotas HTTP</h2>
+  <pre style="margin-top:.5em"><code class="language-python" data-trim>from odoo import http
+from odoo.addons.website_sale.controllers.main import WebsiteSale
+
+
+class WebsiteSaleWeaviate(WebsiteSale):
+    """
+    Herda o controller principal do e-commerce.
+    O Odoo descobre e usa esta classe automaticamente
+    no lugar da original — sem precisar de registro.
+    """
+
+    @http.route()          # mantém a rota /shop original
+    def shop(self, page=0, category=None, search='', **post):
+        # O model já intercepta em _search() via ORM.
+        # O controller garante a ordenação correta na página.
+        return super().shop(
+            page=page, category=category, search=search, **post
+        )</code></pre>
+  <div class="card card-o" style="margin-top:.9em;font-size:.7em;text-align:left">
+    <strong>Como o Odoo descobre o controller herdado?</strong><br>
+    <span style="color:rgba(255,255,255,.65)">O framework usa Python MRO (Method Resolution Order). Ao carregar os módulos instalados, o Odoo constrói a hierarquia de classes automaticamente.</span>
+  </div>
+</section>
+
+<!-- O Mantra do Odoo -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>O Mantra do Odoo</h2>
+  <div style="font-size:2em;font-weight:900;margin:.5em 0 .3em" class="grad-o">"Extend, Don't Modify"</div>
+  <div class="g3" style="margin-top:.6em">
+    <div class="card card-o" style="text-align:center">
+      <div style="font-size:1.4em">🐍</div>
+      <strong style="color:var(--odoo-teal);font-size:.82em">Python</strong>
+      <div style="margin-top:8px"><span class="tag tag-o">_inherit</span></div>
+      <p style="font-size:.6em;color:rgba(255,255,255,.55);margin:8px 0 0">Adiciona campos e sobrescreve métodos no model</p>
+    </div>
+    <div class="card card-o" style="text-align:center">
+      <div style="font-size:1.4em">📄</div>
+      <strong style="color:var(--odoo-teal);font-size:.82em">XML / QWeb</strong>
+      <div style="margin-top:8px"><span class="tag tag-o">inherit_id</span></div>
+      <p style="font-size:.6em;color:rgba(255,255,255,.55);margin:8px 0 0">Injeta elementos nas views via XPath</p>
+    </div>
+    <div class="card card-o" style="text-align:center">
+      <div style="font-size:1.4em">🌐</div>
+      <strong style="color:var(--odoo-teal);font-size:.82em">HTTP</strong>
+      <div style="margin-top:8px"><span class="tag tag-o">subclass</span></div>
+      <p style="font-size:.6em;color:rgba(255,255,255,.55);margin:8px 0 0">Herda controllers e intercepta rotas existentes</p>
+    </div>
+  </div>
+  <div style="margin-top:.9em;font-size:.68em;color:rgba(255,255,255,.42)">
+    Resultado: atualizar o Odoo não quebra seus addons ✅
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     BLOCO 3 — WEAVIATE
+═══════════════════════════════════════════ -->
+<section data-background-gradient="linear-gradient(135deg,#0B1623 0%,#0A1020 100%)">
+  <div style="position:relative">
+    <div class="watermark" style="color:white">3</div>
+    <div class="badge badge-wv">Parte 3</div>
+    <h1>Bancos de Dados<br><span style="color:var(--wv-green)">Vetoriais</span></h1>
+  </div>
+</section>
+
+<!-- O problema da busca SQL -->
+<section data-background-gradient="linear-gradient(135deg,#0B1623 0%,#0A1020 100%)">
+  <h2>O Problema da Busca Tradicional</h2>
+  <div class="g2" style="margin-top:.8em">
+    <div class="cmp-bad">
+      <strong style="color:#FF6B6B">SQL ILIKE</strong>
+      <pre style="margin-top:10px"><code class="language-sql" data-trim>SELECT * FROM product_template
+WHERE name ILIKE '%tenis%'</code></pre>
+      <ul style="font-size:.65em;margin:10px 0 0;padding-left:18px;line-height:1.9;color:rgba(255,255,255,.8)">
+        <li>❌ Não acha "tênis" (acento)</li>
+        <li>❌ Não acha "calçado esportivo"</li>
+        <li>❌ Não entende sinônimos</li>
+        <li>❌ Não entende contexto</li>
+        <li>❌ Relevância zero — tudo igual</li>
+      </ul>
+    </div>
+    <div class="cmp-good">
+      <strong style="color:var(--wv-green)">Busca Semântica</strong>
+      <pre style="margin-top:10px"><code class="language-python" data-trim>weaviate.hybrid_search(
+    "tênis corrida",
+    alpha=0.5
+)</code></pre>
+      <ul style="font-size:.65em;margin:10px 0 0;padding-left:18px;line-height:1.9;color:rgba(255,255,255,.8)">
+        <li>✅ Ignora variações de escrita</li>
+        <li>✅ Entende sinônimos</li>
+        <li>✅ Busca por significado</li>
+        <li>✅ Resultados por relevância</li>
+        <li>✅ Combina com keyword search</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- O que são Embeddings -->
+<section data-background-gradient="linear-gradient(135deg,#0B1623 0%,#0A1020 100%)">
+  <h2>O que são Embeddings?</h2>
+  <div class="g2" style="margin-top:.7em;gap:20px;align-items:center">
+    <div>
+      <div class="card card-w" style="font-size:.75em;text-align:left">
+        <strong>Texto → Vetor Numérico</strong>
+        <p style="margin:8px 0 0;color:rgba(255,255,255,.65)">Um modelo de IA converte qualquer texto em um array de ~1536 números que captura o <em>significado</em> semântico da frase.</p>
+      </div>
+      <pre style="margin-top:10px"><code class="language-python" data-trim>"tênis de corrida"  → [0.23, -0.45, 0.87, ...]
+"calçado esportivo" → [0.21, -0.44, 0.85, ...]
+"notebook Dell"     → [-0.67, 0.12, -0.34, ...]</code></pre>
+      <div class="aside">Textos semanticamente similares ficam <em>próximos</em> no espaço vetorial</div>
+    </div>
+    <div>
+      <!-- SVG espaço vetorial -->
+      <svg viewBox="0 0 270 230" style="width:100%;max-width:270px">
+        <defs>
+          <radialGradient id="vbg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style="stop-color:#1a2a3a"/>
+            <stop offset="100%" style="stop-color:#0a1020"/>
+          </radialGradient>
+        </defs>
+        <rect width="270" height="230" rx="12" fill="url(#vbg)" opacity=".85"/>
+        <line x1="135" y1="10" x2="135" y2="220" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+        <line x1="10"  y1="115" x2="260" y2="115" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+
+        <!-- cluster calçados -->
+        <circle cx="78"  cy="68"  r="28" fill="rgba(0,188,140,.07)" stroke="rgba(0,188,140,.28)" stroke-width="1" stroke-dasharray="4,4"/>
+        <circle cx="70"  cy="62"  r="6"  fill="#00BC8C"/>
+        <text   x="70"   y="83"   text-anchor="middle" fill="#00BC8C" font-size="9">tênis corrida</text>
+        <circle cx="90"  cy="74"  r="5"  fill="#4FC38A" opacity=".85"/>
+        <text   x="90"   y="93"   text-anchor="middle" fill="#4FC38A" font-size="9">calçado esp.</text>
+        <circle cx="74"  cy="53"  r="3.5" fill="#7BE0C0" opacity=".7"/>
+        <text   x="82"   y="47"   text-anchor="start"  fill="#7BE0C0" font-size="9">sapatilha</text>
+
+        <!-- cluster eletrônicos -->
+        <circle cx="195" cy="148" r="26" fill="rgba(113,75,103,.07)" stroke="rgba(113,75,103,.28)" stroke-width="1" stroke-dasharray="4,4"/>
+        <circle cx="190" cy="143" r="6"  fill="#714B67"/>
+        <text   x="190"  y="165"  text-anchor="middle" fill="#C5A8BE" font-size="9">notebook Dell</text>
+        <circle cx="207" cy="156" r="4.5" fill="#9A7090" opacity=".8"/>
+        <text   x="214"  y="170"  text-anchor="middle" fill="#9A7090" font-size="9">laptop HP</text>
+
+        <!-- cluster roupas -->
+        <circle cx="82"  cy="172" r="20" fill="rgba(255,107,107,.06)" stroke="rgba(255,107,107,.22)" stroke-width="1" stroke-dasharray="4,4"/>
+        <circle cx="79"  cy="167" r="5"  fill="#FF6B6B" opacity=".75"/>
+        <text   x="79"   y="188"  text-anchor="middle" fill="#FF8B8B" font-size="9">camiseta polo</text>
+
+        <!-- linha de distância -->
+        <line x1="75" y1="65" x2="190" y2="146" stroke="rgba(255,255,255,.13)" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="138" y="105" text-anchor="middle" fill="rgba(255,255,255,.28)" font-size="8">distante</text>
+
+        <text x="135" y="218" text-anchor="middle" fill="rgba(255,255,255,.25)" font-size="8">espaço vetorial 2D (simplificado)</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- Hybrid Search -->
+<section data-background-gradient="linear-gradient(135deg,#0B1623 0%,#0A1020 100%)">
+  <h2>Hybrid Search</h2>
+  <p style="font-size:.7em;color:rgba(255,255,255,.5);margin-bottom:.8em">O melhor dos dois mundos: keyword + semântica</p>
+  <div class="g3" style="margin-bottom:.9em">
+    <div class="card card-w" style="text-align:center">
+      <div style="font-size:1.4em">🔤</div>
+      <strong style="color:#FFB347;font-size:.8em">BM25</strong>
+      <p style="font-size:.6em;color:rgba(255,255,255,.55);margin:7px 0 0">Keyword search clássico. Ótimo para termos exatos, SKUs, códigos.</p>
+    </div>
+    <div style="text-align:center;display:flex;align-items:center;justify-content:center;flex-direction:column">
+      <div style="font-size:2em">⚖️</div>
+      <div style="font-size:.68em;color:rgba(255,255,255,.45)">alpha = 0.5</div>
+      <code style="font-size:.5em;color:var(--wv-green);display:block;margin-top:6px">RELATIVE_SCORE fusion</code>
+    </div>
+    <div class="card card-w" style="text-align:center">
+      <div style="font-size:1.4em">🧠</div>
+      <strong style="color:var(--wv-green);font-size:.8em">Vetor</strong>
+      <p style="font-size:.6em;color:rgba(255,255,255,.55);margin:7px 0 0">Busca semântica. Ótimo para linguagem natural e sinônimos.</p>
+    </div>
+  </div>
+  <pre><code class="language-python" data-trim>def hybrid_search(self, query: str, limit: int = 50, alpha: float = 0.5):
+    with self._get_client() as client:
+        collection = client.collections.get(self.collection_name)
+        results = collection.query.hybrid(
+            query=query,
+            alpha=alpha,              # 0 = só BM25 · 1 = só vetor
+            limit=limit,
+            fusion_type=HybridFusion.RELATIVE_SCORE,
+            return_metadata=MetadataQuery(score=True),
+        )
+        # Retorna {odoo_id: score} ordenado por relevância
+        return {int(o.properties["odoo_id"]): o.metadata.score
+                for o in results.objects}</code></pre>
+</section>
+
+<!-- O que é o Weaviate -->
+<section data-background-gradient="linear-gradient(135deg,#0B1623 0%,#0A1020 100%)">
+  <h2>O que é o Weaviate?</h2>
+  <div class="g2" style="margin-top:.7em;gap:16px">
+    <div>
+      <div class="card card-w">
+        <div style="font-size:1.2em;margin-bottom:5px">🗃️</div>
+        <strong>Banco Vetorial Open Source</strong>
+        <p style="font-size:.65em;color:rgba(255,255,255,.6);margin:7px 0 0">Armazena objetos com seus embeddings. Indexação eficiente com HNSW para busca de vizinhos mais próximos.</p>
+      </div>
+      <div class="card card-w" style="margin-top:8px">
+        <div style="font-size:1.2em;margin-bottom:5px">🔌</div>
+        <strong>Módulos de Vetorização</strong>
+        <p style="font-size:.65em;color:rgba(255,255,255,.6);margin:7px 0 0"><code>text2vec-openai</code>, <code>text2vec-cohere</code>, <code>text2vec-transformers</code>… O Odoo envia texto, o Weaviate vetoriza automaticamente.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card card-w">
+        <div style="font-size:1.2em;margin-bottom:5px">🔍</div>
+        <strong>Hybrid Search Nativo</strong>
+        <p style="font-size:.65em;color:rgba(255,255,255,.6);margin:7px 0 0">BM25 + vetor em uma só query, com fusão de scores configurável.</p>
+      </div>
+      <div class="card card-w" style="margin-top:8px">
+        <div style="font-size:1.2em;margin-bottom:5px">🚀</div>
+        <strong>API gRPC + HTTP / GraphQL</strong>
+        <p style="font-size:.65em;color:rgba(255,255,255,.6);margin:7px 0 0">SDK Python oficial. Cloud gerenciado ou self-hosted via Docker.</p>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:.8em;text-align:center">
+    <span class="tag tag-w">Collections</span>
+    <span class="tag tag-w">Properties</span>
+    <span class="tag tag-w">Vectorizers</span>
+    <span class="tag tag-w">Hybrid Search</span>
+    <span class="tag tag-w">Batch Import</span>
+    <span class="tag tag-w">HNSW</span>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     BLOCO 4 — A INTEGRAÇÃO
+═══════════════════════════════════════════ -->
+<section data-background-gradient="linear-gradient(135deg,#0B1623 0%,#1E1022 100%)">
+  <div style="position:relative">
+    <div class="watermark" style="color:white">4</div>
+    <div class="badge badge-mixed">Parte 4</div>
+    <h1>A<br><span class="grad-m">Integração</span></h1>
+  </div>
+</section>
+
+<!-- Visão geral do módulo -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#0B1623 100%)">
+  <h2><code>product_weaviate_search</code></h2>
+  <p style="font-size:.68em;color:rgba(255,255,255,.45);margin-bottom:.7em">O que o módulo faz — sem alterar uma linha do Odoo core</p>
+  <div class="g2" style="gap:12px">
+    <div>
+      <div class="step">
+        <div class="num num-w">1</div>
+        <div style="font-size:.7em">
+          <strong>Sincronização em tempo real</strong>
+          <p style="margin:2px 0 0;color:rgba(255,255,255,.45)">Hooks nos eventos create/write/unlink mantêm o Weaviate atualizado</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num num-w">2</div>
+        <div style="font-size:.7em">
+          <strong>Busca backend substituída</strong>
+          <p style="margin:2px 0 0;color:rgba(255,255,255,.45)">Lista de produtos usa hybrid search em vez de SQL ILIKE</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="step">
+        <div class="num num-w">3</div>
+        <div style="font-size:.7em">
+          <strong>Busca do e-commerce substituída</strong>
+          <p style="margin:2px 0 0;color:rgba(255,255,255,.45)">Rota /shop interceptada via herança de controller</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num num-w">4</div>
+        <div style="font-size:.7em">
+          <strong>Wizard de sincronização em massa</strong>
+          <p style="margin:2px 0 0;color:rgba(255,255,255,.45)">Re-indexa todos os produtos, com reset e relatório de erros</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-w" style="margin-top:14px;font-size:.7em;text-align:left">
+    <strong style="color:var(--wv-green)">Tolerância a falhas:</strong>
+    <span style="color:rgba(255,255,255,.65)"> Se o Weaviate estiver fora, o Odoo continua com a busca SQL.
+    Nenhuma operação de salvar/editar produto é bloqueada.</span>
+  </div>
+</section>
+
+<!-- Sincronização em tempo real -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#0B1623 100%)">
+  <h2>Sincronização em Tempo Real</h2>
+  <pre style="margin-top:.5em"><code class="language-python" data-trim>class ProductTemplate(models.Model):
+    _inherit = 'product.template'
+
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        if self._weaviate_live_sync_enabled():
+            records._weaviate_sync_after_write()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        # Só sincroniza se campos relevantes foram alterados
+        watched = {'name', 'description', 'list_price',
+                   'categ_id', 'description_sale', 'active'}
+        if self._weaviate_live_sync_enabled() and (watched & vals.keys()):
+            self._weaviate_sync_after_write()
+        return result
+
+    def unlink(self):
+        # Guarda UUIDs antes de deletar
+        uuids = self.filtered('weaviate_uuid').mapped('weaviate_uuid')
+        result = super().unlink()
+        if uuids and self._weaviate_live_sync_enabled():
+            service = WeaviateService.from_config(self.env)
+            for uuid in uuids:
+                service.delete_product(uuid)
+        return result</code></pre>
+  <div class="aside">💡 UUID determinístico (UUID5 do odoo_id) garante verdadeiro upsert — sem duplicatas</div>
+</section>
+
+<!-- Override do _search() -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#0B1623 100%)">
+  <h2>Override do <code>_search()</code></h2>
+  <pre style="margin-top:.4em"><code class="language-python" data-trim>def _search(self, domain, offset=0, limit=None, order=None):
+    # 1. Extrai o termo de texto do domain do ORM
+    query = self._extract_weaviate_query(domain)
+
+    if query and self._weaviate_backend_search_enabled():
+        service = WeaviateService.from_config(self.env)
+        if service:
+            try:
+                # 2. Hybrid search → {id: score} ordenado
+                scores = service.hybrid_search(query)
+
+                # 3. Guarda scores em thread-local (isolado por request)
+                _weaviate_scores.scores = scores
+
+                # 4. Retorna IDs na ordem de relevância
+                if scores:
+                    return list(scores.keys())
+            except Exception as e:
+                _logger.warning("Weaviate search failed, fallback: %s", e)
+
+    # 5. Fallback: busca SQL normal
+    return super()._search(domain, offset, limit, order)</code></pre>
+  <div class="g2" style="margin-top:8px;gap:8px;font-size:.65em">
+    <div class="card card-w" style="text-align:left">
+      <strong>Thread-local storage</strong><br>
+      <span style="color:rgba(255,255,255,.6)">Scores isolados por request. Seguro em ambiente multi-worker do Odoo (Gunicorn).</span>
+    </div>
+    <div class="card" style="border-left:3px solid #714B67;text-align:left">
+      <strong>Fallback automático</strong><br>
+      <span style="color:rgba(255,255,255,.6)">Qualquer exceção → cai silenciosamente no SQL ILIKE padrão.</span>
+    </div>
+  </div>
+</section>
+
+<!-- E-commerce sem tocar no código base -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#0B1623 100%)">
+  <h2>E-commerce Sem Tocar no Código Base</h2>
+  <pre style="margin-top:.5em"><code class="language-python" data-trim># controllers/website_sale.py
+try:
+    from odoo.addons.website_sale.controllers.main import WebsiteSale
+    WEBSITE_SALE_AVAILABLE = True
+except ImportError:
+    WEBSITE_SALE_AVAILABLE = False
+
+
+if WEBSITE_SALE_AVAILABLE:
+
+    class WebsiteSaleWeaviate(WebsiteSale):
+        """
+        Apenas herdar esta classe já é suficiente.
+        O Odoo usa esta versão automaticamente no lugar de
+        WebsiteSale — sem registro, sem config, sem tocar no
+        módulo website_sale.
+        """
+        @http.route()
+        def shop(self, page=0, category=None, search='', **post):
+            # O model intercepta em _search() via ORM.
+            # Aqui garantimos a ordenação correta dos resultados.
+            return super().shop(
+                page=page, category=category, search=search, **post
+            )</code></pre>
+  <div class="card card-w" style="margin-top:10px;font-size:.7em;text-align:left">
+    <strong style="color:var(--wv-green)">A mágica:</strong>
+    <span style="color:rgba(255,255,255,.65)"> O módulo <code>website_sale</code> é <em>opcional</em>. O import é dentro de <code>try/except</code>.
+    Se o e-commerce não estiver instalado, nada quebra.</span>
+  </div>
+</section>
+
+<!-- Diagrama de Arquitetura -->
+<section data-background-gradient="linear-gradient(135deg,#08101A 0%,#0B1623 100%)">
+  <h2>Arquitetura Completa</h2>
+  <svg viewBox="0 0 720 360" style="width:100%;max-width:720px;margin-top:.4em">
+    <defs>
+      <marker id="aw"  markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="rgba(255,255,255,.35)"/></marker>
+      <marker id="ag"  markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#00BC8C"/></marker>
+      <marker id="ap"  markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#714B67"/></marker>
+      <marker id="ab"  markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="rgba(100,100,255,.5)"/></marker>
+    </defs>
+
+    <!-- Browser -->
+    <rect x="10"  y="140" width="115" height="80" rx="9" fill="#1E2A3A" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
+    <text x="67"  y="175" text-anchor="middle" fill="white"               font-size="13" font-weight="700">🌐 Browser</text>
+    <text x="67"  y="193" text-anchor="middle" fill="rgba(255,255,255,.45)" font-size="10">localhost:8069</text>
+    <text x="67"  y="209" text-anchor="middle" fill="rgba(255,255,255,.32)" font-size="9">/shop?search=tênis</text>
+
+    <!-- Odoo box -->
+    <rect x="205" y="50"  width="150" height="265" rx="11" fill="#2D1B3D" stroke="#714B67" stroke-width="1.5"/>
+    <text x="280" y="78"  text-anchor="middle" fill="#C5A8BE" font-size="12" font-weight="700">⚙️  ODOO 19</text>
+    <text x="280" y="93"  text-anchor="middle" fill="rgba(255,255,255,.28)" font-size="9">:8069</text>
+
+    <rect x="220" y="105" width="120" height="28" rx="6" fill="rgba(113,75,103,.3)" stroke="rgba(113,75,103,.5)" stroke-width="1"/>
+    <text x="280" y="123" text-anchor="middle" fill="#C5A8BE" font-size="9">WebsiteSaleWeaviate</text>
+
+    <rect x="220" y="143" width="120" height="28" rx="6" fill="rgba(113,75,103,.3)" stroke="rgba(113,75,103,.5)" stroke-width="1"/>
+    <text x="280" y="161" text-anchor="middle" fill="#C5A8BE" font-size="9">ProductTemplate._search()</text>
+
+    <rect x="220" y="181" width="120" height="28" rx="6" fill="rgba(0,160,157,.2)" stroke="rgba(0,160,157,.4)" stroke-width="1"/>
+    <text x="280" y="199" text-anchor="middle" fill="#00A09D" font-size="9">WeaviateService</text>
+
+    <rect x="220" y="219" width="120" height="28" rx="6" fill="rgba(50,30,70,.5)" stroke="rgba(100,60,140,.4)" stroke-width="1"/>
+    <text x="280" y="237" text-anchor="middle" fill="rgba(255,255,255,.45)" font-size="9">ORM / PostgreSQL</text>
+
+    <!-- PostgreSQL -->
+    <rect x="205" y="330" width="150" height="26" rx="7" fill="#1A2A1A" stroke="rgba(100,200,100,.3)" stroke-width="1.5"/>
+    <text x="280" y="347" text-anchor="middle" fill="rgba(100,255,100,.65)" font-size="11" font-weight="700">🐘  PostgreSQL</text>
+
+    <!-- Weaviate -->
+    <rect x="440" y="90"  width="135" height="175" rx="11" fill="#0F2318" stroke="#00BC8C" stroke-width="1.5"/>
+    <text x="507" y="117" text-anchor="middle" fill="#00BC8C" font-size="12" font-weight="700">🔍  WEAVIATE</text>
+    <text x="507" y="131" text-anchor="middle" fill="rgba(255,255,255,.28)" font-size="9">:8080</text>
+    <rect x="458" y="143" width="97"  height="24" rx="5" fill="rgba(0,188,140,.1)" stroke="rgba(0,188,140,.3)" stroke-width="1"/>
+    <text x="507" y="159" text-anchor="middle" fill="#7BE0C0" font-size="9">OdooProduct</text>
+    <rect x="458" y="175" width="97"  height="24" rx="5" fill="rgba(0,188,140,.1)" stroke="rgba(0,188,140,.3)" stroke-width="1"/>
+    <text x="507" y="191" text-anchor="middle" fill="#7BE0C0" font-size="9">text2vec-openai</text>
+    <rect x="458" y="207" width="97"  height="24" rx="5" fill="rgba(0,188,140,.1)" stroke="rgba(0,188,140,.3)" stroke-width="1"/>
+    <text x="507" y="223" text-anchor="middle" fill="#7BE0C0" font-size="9">hybrid search</text>
+
+    <!-- OpenAI -->
+    <rect x="590" y="120" width="120" height="55" rx="8" fill="#1A1A2E" stroke="rgba(130,130,255,.4)" stroke-width="1.5"/>
+    <text x="650" y="146" text-anchor="middle" fill="rgba(160,160,255,.9)" font-size="12" font-weight="700">✨  OpenAI</text>
+    <text x="650" y="163" text-anchor="middle" fill="rgba(160,160,255,.5)" font-size="9">Embeddings API</text>
+
+    <!-- Arrows -->
+    <!-- Browser → Odoo -->
+    <line x1="125" y1="180" x2="202" y2="180" stroke="rgba(255,255,255,.3)" stroke-width="1.5" marker-end="url(#aw)"/>
+    <text x="163"  y="170" text-anchor="middle" fill="rgba(255,255,255,.38)" font-size="8">HTTP /shop</text>
+    <!-- Response -->
+    <line x1="202" y1="165" x2="125" y2="165" stroke="rgba(255,255,255,.18)" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#aw)"/>
+    <text x="163"  y="158" text-anchor="middle" fill="rgba(255,255,255,.25)" font-size="8">HTML</text>
+    <!-- Odoo → PostgreSQL -->
+    <line x1="280" y1="248" x2="280" y2="327" stroke="rgba(100,200,100,.4)" stroke-width="1.5" marker-end="url(#aw)"/>
+    <!-- Odoo WeaviateService → Weaviate search -->
+    <line x1="340" y1="198" x2="437" y2="178" stroke="#00BC8C" stroke-width="1.5" marker-end="url(#ag)"/>
+    <text x="390"  y="182" text-anchor="middle" fill="#4FC38A" font-size="8">hybrid_search()</text>
+    <!-- Weaviate → Odoo response -->
+    <line x1="437" y1="195" x2="340" y2="210" stroke="#00BC8C" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#ag)"/>
+    <text x="390"  y="215" text-anchor="middle" fill="rgba(0,188,140,.5)" font-size="8">{id: score}</text>
+    <!-- Odoo sync → Weaviate -->
+    <line x1="340" y1="160" x2="437" y2="148" stroke="#714B67" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ap)"/>
+    <text x="392"  y="147" text-anchor="middle" fill="rgba(197,168,190,.7)" font-size="8">upsert / delete</text>
+    <!-- Weaviate → OpenAI -->
+    <line x1="575" y1="170" x2="588" y2="162" stroke="rgba(130,130,255,.6)" stroke-width="1.5" marker-end="url(#ab)"/>
+    <text x="581"  y="155" text-anchor="middle" fill="rgba(130,130,255,.5)" font-size="7">vectorize</text>
+  </svg>
+</section>
+
+<!-- Conclusão -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#2D1B3D 100%)">
+  <h2>Conclusão</h2>
+  <div style="font-size:1.7em;font-weight:900;margin:.4em 0 .3em;line-height:1.2" class="grad-m">
+    Odoo + Weaviate =<br>IA no E-commerce
+  </div>
+  <div class="g3" style="margin-top:.7em">
+    <div class="card card-o" style="text-align:center">
+      <div style="font-size:1.3em">🧩</div>
+      <strong style="font-size:.82em">Herança é tudo</strong>
+      <p style="font-size:.6em;color:rgba(255,255,255,.55);margin:6px 0 0">Models, Views e Controllers — sem modificar o core</p>
+    </div>
+    <div class="card card-o" style="text-align:center">
+      <div style="font-size:1.3em">🔍</div>
+      <strong style="font-size:.82em">Busca semântica</strong>
+      <p style="font-size:.6em;color:rgba(255,255,255,.55);margin:6px 0 0">Weaviate entende significado, não só palavras-chave</p>
+    </div>
+    <div class="card card-w" style="text-align:center">
+      <div style="font-size:1.3em">🛡️</div>
+      <strong style="font-size:.82em">Tolerante a falhas</strong>
+      <p style="font-size:.6em;color:rgba(255,255,255,.55);margin:6px 0 0">Weaviate fora? Odoo usa SQL. Transparente para o usuário.</p>
+    </div>
+  </div>
+  <div class="g2" style="margin-top:12px;gap:8px;font-size:.65em">
+    <div class="step">
+      <div style="font-size:1.2em">📦</div>
+      <div><strong>Próximos módulos</strong><br><span style="color:rgba(255,255,255,.45)">partner_weaviate_search · helpdesk_weaviate_search</span></div>
+    </div>
+    <div class="step">
+      <div style="font-size:1.2em">🐙</div>
+      <div><strong>Código aberto</strong><br><code style="color:var(--odoo-teal);font-size:.9em">github.com/dudanogueira/<br>odoo-weaviate-integration</code></div>
+    </div>
+  </div>
+</section>
+
+<!-- Perguntas -->
+<section data-background-gradient="linear-gradient(135deg,#1E1022 0%,#0B1623 100%)">
+  <div style="font-size:4.5em;margin-bottom:.15em">🙋</div>
+  <h1 style="font-size:2.4em">Perguntas?</h1>
+  <div class="div-m"></div>
+  <p style="font-size:.65em;color:rgba(255,255,255,.4)">
+    Odoo Week — Introdução ao Odoo e a Anatomia de um Addon
+  </p>
+</section>
+
+</div><!-- .slides -->
+</div><!-- .reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/zoom/zoom.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    controls: true,
+    progress: true,
+    center: true,
+    width: 1200,
+    height: 700,
+    margin: 0.04,
+    plugins: [RevealHighlight, RevealNotes, RevealZoom],
+  });
+</script>
+</body>
+</html>
